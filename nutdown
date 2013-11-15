@@ -10,6 +10,13 @@ use IPC::Run qw(run);
 
 my $configfile = $ARGV[0] // "/etc/nutdown/nutdown.conf";
 my $conf = create_hostconfig($configfile);
+
+if (grep {m/^--dump-config$/} @ARGV) {
+	use Data::Dumper qw(Dumper);
+	print Dumper($conf);
+	exit;
+}
+
 $SIG{CHLD} = "IGNORE";
 
 unless(fork()) {
@@ -22,6 +29,10 @@ unless(fork()) {
 	while (1) {
 		if (! $ups) {
 			$ups = maybe_connect_to_ups();
+		}
+
+		if (! $ups) {
+			next;
 		}
 
 		my $status = $ups->Status();
@@ -92,12 +103,11 @@ sub execute_action {
 }
 
 sub maybe_connect_to_ups {
-	my $ret = new UPS::Nut(NAME => $conf->{ups}->{name}, HOST => $conf->{ups}->{host}, PORT => $conf->{ups}->{port},
+	my $ret = UPS::Nut->new(NAME => $conf->{ups}->{name}, HOST => $conf->{ups}->{host}, PORT => $conf->{ups}->{port},
 		USERNAME => $conf->{ups}->{username}, PASSWORD => $conf->{ups}->{password}, TIMEOUT => $conf->{ups}->{timeout});
 
 	unless (defined($ret)) {
-		syslog("err", "could not connect to ups ". $conf->{ups}->{name});
-		syslog("err", "error string ". $ret->Error());
+		syslog("err", "could not connect to ups ". $conf->{ups}->{name} // "undef");
 		return undef;
 	}
 
@@ -114,13 +124,12 @@ sub create_hostconfig
 		poll_interval => 30,
 	};
 
-
-	copy_if_defined($fconf{host}->{$host}, $ret);
+	$ret = copy_if_defined($fconf{host}->{$host}, $ret);
 	if (defined($fconf{host}->{$host}->{group})) {
-		copy_if_defined($fconf{group}->{$fconf{host}->{$host}->{group}}, $ret);
+		$ret = copy_if_defined($fconf{group}->{$fconf{host}->{$host}->{group}}, $ret);
 	}
-	copy_if_defined($fconf{default}, $ret);
-	copy_if_defined($defaultconfig, $ret);
+	$ret = copy_if_defined($fconf{default}, $ret);
+	$ret = copy_if_defined($defaultconfig, $ret);
 
 	return $ret;
 }
@@ -130,8 +139,10 @@ sub copy_if_defined
 	my ($a, $b) = @_;
 
 	for (keys %{$a}) {
-		unless (defined($b->{$_})) {
+		unless (exists($b->{$_})) {
 			$b->{$_} = $a->{$_};
 		}
 	}
+
+	return $b;
 }
