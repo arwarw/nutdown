@@ -1,5 +1,6 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 
+use warnings;
 use strict;
 use Sys::Syslog;
 use Sys::Hostname;
@@ -8,7 +9,7 @@ use UPS::Nut;
 use IPC::Run qw(run);
 
 my $configfile = $ARGV[0] // "/etc/nutdown/nutdown.conf";
-my %conf = create_hostconfig($configfile);
+my $conf = create_hostconfig($configfile);
 $SIG{CHLD} = "IGNORE";
 
 unless(fork()) {
@@ -91,12 +92,12 @@ sub execute_action {
 }
 
 sub maybe_connect_to_ups {
-	my $ret = UPS::Nut(NAME => $conf->{ups}->{name}, HOST => $conf->{ups}->{host}, PORT => $conf->{ups}->{port},
+	my $ret = new UPS::Nut(NAME => $conf->{ups}->{name}, HOST => $conf->{ups}->{host}, PORT => $conf->{ups}->{port},
 		USERNAME => $conf->{ups}->{username}, PASSWORD => $conf->{ups}->{password}, TIMEOUT => $conf->{ups}->{timeout});
 
 	unless (defined($ret)) {
-		syslog("error", "could not connect to ups ". $conf->{ups}->{name});
-		syslog("error", "error string ". $ret->Error());
+		syslog("err", "could not connect to ups ". $conf->{ups}->{name});
+		syslog("err", "error string ". $ret->Error());
 		return undef;
 	}
 
@@ -106,19 +107,19 @@ sub maybe_connect_to_ups {
 sub create_hostconfig 
 {	
 	my $configfile = shift;
-	my %fconf = ParseConfig($configfile) || die "could not parse config: $!";
-	my $hostname = hostname();
+	my %fconf = ParseConfig($configfile);
+	my $host = hostname();
 	my $ret;
 	my $defaultconfig = {
-		poll_interval = 30;
+		poll_interval => 30,
 	};
 
 
-	copy_if_defined($fconf->{host}->{$hostname}, $ret);
-	if (defined($fconf->{host}->{$hostname}->{group})) {
-		copy_if_defined($fconf->{group}->{$fconf->{host}->{$hostname}->{group}}, $ret);
+	copy_if_defined($fconf{host}->{$host}, $ret);
+	if (defined($fconf{host}->{$host}->{group})) {
+		copy_if_defined($fconf{group}->{$fconf{host}->{$host}->{group}}, $ret);
 	}
-	copy_if_defined($fconf->{default}, $ret);
+	copy_if_defined($fconf{default}, $ret);
 	copy_if_defined($defaultconfig, $ret);
 
 	return $ret;
