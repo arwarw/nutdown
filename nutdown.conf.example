@@ -1,0 +1,75 @@
+# nutdown example config file
+#
+# The syntax is similar to Apache configurations, there are sections starting
+# and ending in XML-like syntax (<section>...</section>). Sections may be named
+# like in <section foobar>. Sections may be nested.
+#
+# Directives are key-value pairs like 'temperature = 17'. 
+#
+# There are three kinds of top-level sections in the configuration, 'default',
+# 'host' and 'group' configurations. These are evaluated from the most specific
+# to the least specific. E.g. a host 'foobar', that belongs to the group
+# 'servers' will have <host foobar> evaluated first, then <group servers>, then
+# <default>. This means that a directive in a host section will override the
+# same directive in group or default sections.
+#
+# If no host section corresponding to the local hostname exists, only the
+# default section will be evaluated.
+
+# how often the NUT server should be polled, time in seconds
+poll_interval = 30
+
+# a default section. the same directives may be used in <host> or <group> directives
+<default>
+	<ups>
+		name UPS1
+		host ups1.example.com
+		port 3493
+		username upsuser
+		password changeme
+		timeout 30
+	</ups>
+
+	# numerical event names correspond to battery percentages.
+	# if the battery charge falls below 30% the following event will be executed:
+	<event 30>
+		syslog shutdown because battery is low
+		exec shutdown -h now "USV battery low"
+	</event>
+
+	# when the USV is in forced_shutdown mode
+	<event forced_shutdown>
+		syslog emergency sync for forced shutdown
+		exec sync
+	</event>
+	# unknown battery percentage when on battery
+	<event unknown_percentage>
+		syslog emergency sync for unknown battery percentage
+		exec sync
+	</event>
+	# unknown status string or lost connection
+	<event unknown_status>
+		syslog emergency sync for unknown status string or lost connection
+		exec sync
+	</event>
+</default>
+
+<group servers>
+	<event 95>
+		exec echo "things might break because of extended power failure" | wall
+	</event>
+</group>
+
+<host example>
+	group servers
+	<event 80>
+		exec /etc/init.d/apache stop
+	</event>
+</host>
+
+<host noshutdown>
+	# override the 30% exec shutdown event from <default>
+	<event 30>
+		exec true
+	</event>
+</host>

@@ -1,0 +1,136 @@
+#!/usr/bin/env perl -w
+
+use strict;
+use Sys::Syslog;
+use Sys::Hostname;
+use Config::General qw(ParseConfig);
+use UPS::Nut;
+use IPC::Run qw(run);
+
+my $configfile = $ARGV[0] // "/etc/nutdown/nutdown.conf";
+my %conf = create_hostconfig($configfile);
+$SIG{CHLD} = "IGNORE";
+
+unless(fork()) {
+	openlog("nutdown", "pid", "daemon");
+	syslog("notice", "starting up with config $configfile");
+
+	my $ups;
+	my $last_state;
+
+	while (1) {
+		if (! $ups) {
+			$ups = maybe_connect_to_ups();
+		}
+
+		my $status = $ups->Status();
+
+		if ($status =~ m/FSD/) {
+			execute_action($conf->{event}->{forced_shutdown});
+		}
+
+		if ($status =~ m/^OB/) {
+			# on battery
+
+			my $battery = $ups->BattPercent();
+			if (defined($battery)) {
+				if ($battery != $last_state) {
+					# FIXME: this does only work if we hit one percentage exactly, which is unlikely
+					execute_action($conf->{event}->{$battery});
+				}
+				$last_state = $battery + 0; # we want a sane number, no leading zeroes or stuff, so force a cast
+			} else {
+				if ($last_state eq 'OB') {
+					# we didn't get a percentage twice, do something
+					execute_action($conf->{event}->{unknown_percentage});
+				} else {
+					# we didn't get a percentage once, that may be bad
+					$last_state = 'OB';
+				}
+			}
+		} elsif ($status =~ m/^OL/) {
+			# on line power
+
+			if ($last_state ne 'OL') {
+				# power has returned recently
+				execute_action($conf->{event}->{power_return});
+			}
+
+			$last_state = 'OL';
+		} else {
+			# some unknown status
+
+			if ($last_state ne 'unknown_status') {
+				syslog("warning", "reconnecting because of unparseable status ". $status // "undef");
+				execute_action($conf->{event}->{unknown_status});
+				$last_state = 'unknown_status';
+
+				$ups = maybe_connect_to_ups();
+			}
+		}
+
+		sleep($conf->{poll_interval});
+	}
+}
+
+exit 0;
+
+sub execute_action {
+	my $action = shift;
+	if (defined $action) {
+		if ($action->{syslog}) {
+			syslog("info", $action->{syslog});
+		}
+
+		if ($action->{exec}) {
+			unless(fork()) {
+				run $action->{exec};
+			}
+		}
+	}
+}
+
+sub maybe_connect_to_ups {
+	my $ret = UPS::Nut(NAME => $conf->{ups}->{name}, HOST => $conf->{ups}->{host}, PORT => $conf->{ups}->{port},
+		USERNAME => $conf->{ups}->{username}, PASSWORD => $conf->{ups}->{password}, TIMEOUT => $conf->{ups}->{timeout});
+
+	unless (defined($ret)) {
+		syslog("error", "could not connect to ups ". $conf->{ups}->{name});
+		syslog("error", "error string ". $ret->Error());
+		return undef;
+	}
+
+	return $ret;
+}
+
+sub create_hostconfig 
+{	
+	my $configfile = shift;
+	my %fconf = ParseConfig($configfile) || die "could not parse config: $!";
+	my $hostname = hostname();
+	my $ret;
+	my $defaultconfig = {
+		poll_interval = 30;
+	};
+
+
+	copy_if_defined($fconf->{host}->{$hostname}, $ret);
+	if (defined($fconf->{host}->{$hostname}->{group})) {
+		copy_if_defined($fconf->{group}->{$fconf->{host}->{$hostname}->{group}}, $ret);
+	}
+	copy_if_defined($fconf->{default}, $ret);
+	copy_if_defined($defaultconfig, $ret);
+
+	return $ret;
+}
+
+sub copy_if_defined
+{
+	my ($a, $b) = @_;
+
+	for (keys %{$a}) {
+		unless (defined($b->{$_})) {
+			$b->{$_} = $a->{$_};
+		}
+	}
+}
