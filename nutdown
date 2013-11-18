@@ -18,12 +18,17 @@ if (grep {m/^--dump-config$/} @ARGV) {
 }
 
 $SIG{CHLD} = "IGNORE";
+my $ups;
+$ups = maybe_connect_to_ups();
+
+if (! $ups) {
+	die "could not connect to UPS: $!";
+}
 
 unless(fork()) {
 	openlog("nutdown", "pid", "daemon");
 	syslog("notice", "starting up with config $configfile");
 
-	my $ups;
 	my $last_state;
 
 	while (1) {
@@ -32,12 +37,20 @@ unless(fork()) {
 		}
 
 		if (! $ups) {
+			sleep($conf->{poll_interval});
+			next;
+		}
+
+		# UPS::Nut isa IO::Socket::INET
+		if (! $ups->connected()) {
+			sleep($conf->{poll_interval});
 			next;
 		}
 
 		my $status = $ups->Status();
 
 		if ($status =~ m/FSD/) {
+			# forced shutdown state, UPS will cut power soon
 			execute_action($conf->{event}->{forced_shutdown});
 		}
 
@@ -103,8 +116,12 @@ sub execute_action {
 }
 
 sub maybe_connect_to_ups {
-	my $ret = UPS::Nut->new(NAME => $conf->{ups}->{name}, HOST => $conf->{ups}->{host}, PORT => $conf->{ups}->{port},
-		USERNAME => $conf->{ups}->{username}, PASSWORD => $conf->{ups}->{password}, TIMEOUT => $conf->{ups}->{timeout});
+	my $ret =  new UPS::Nut(NAME => $conf->{ups}->{name},
+				HOST => $conf->{ups}->{host},
+				PORT => $conf->{ups}->{port},
+				USERNAME => $conf->{ups}->{username},
+				PASSWORD => $conf->{ups}->{password},
+				TIMEOUT => $conf->{ups}->{timeout});
 
 	unless (defined($ret)) {
 		syslog("err", "could not connect to ups ". $conf->{ups}->{name} // "undef");
