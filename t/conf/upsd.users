@@ -1,0 +1,4 @@
+[testclient]
+	password = testpassword
+	allowfrom = clients
+	upsmon slave
