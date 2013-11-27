@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More; # tests => 99 FIXME: anzahl
+use Test::More tests => 27; 
 use IPC::Run qw(run);
 
 my $nutdown = './nutdown';
