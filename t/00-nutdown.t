@@ -43,7 +43,7 @@ ok(-f "$state/below_10", "below 10% battery indicator file exists");
 ups_state('OL', 0);
 ok(-f "$state/power_return", "power_return indicator present");
 ok(not -f "$state/on_battery", "on battery no longer indicated on power return");
-ok(not (-f "$state/below_10" or -f $state/"below_90"), "below x% indicator files no longer exist");
+ok(not (-f "$state/below_10" or -f "$state/below_90"), "below x% indicator files no longer exist");
 
 ups_state('OL', 50);
 ok(not -f "$state/on_battery", "on battery no longer indicated on power return");
@@ -62,7 +62,7 @@ ok(not -f "$state/below_10", "below 10% battery indicator does not exist");
 ups_state('OL', 100);
 ok(-f "$state/power_return", "power_return indicator present");
 ok(not -f "$state/on_battery", "on battery no longer indicated on power return");
-ok(not (-f "$state/below_10" or -f $state/"below_90"), "below x% indicator files no longer exist");
+ok(not (-f "$state/below_10" or -f "$state/below_90"), "below x% indicator files no longer exist");
 # everything should be alright again, state should be cleaned up.
 # TODO: test FSD, unknown_percentage, unknown_status?
 
