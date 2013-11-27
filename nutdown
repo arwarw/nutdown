@@ -44,7 +44,7 @@ unless(fork()) {
 			next;
 		}
 
-		# UPS::Nut isa IO::Socket::INET
+		# UPS::Nut->{srvsock} isa IO::Socket::INET
 		if (! $ups->{srvsock}->connected()) {
 			sleep($conf->{poll_interval});
 			next;
@@ -71,8 +71,13 @@ unless(fork()) {
 			my $battery = $ups->BattPercent();
 			if (defined($battery)) {
 				if ($battery != $last_state) {
-					# FIXME: this does only work if we hit one percentage exactly, which is unlikely
-					execute_action($conf->{event}->{$battery});
+					my $i;
+					for ($i = $last_state; $i > $battery; $i--) {
+						# execute all actions between the last known battery charge and the current charge
+						if (exists($conf->{event}->{$i})) {
+							execute_action($conf->{event}->{$i});
+						}
+					}
 				}
 				$last_state = $battery + 0; # we want a sane number, no leading zeroes or stuff, so force a cast
 			} else {
