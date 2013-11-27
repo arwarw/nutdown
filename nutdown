@@ -26,33 +26,20 @@ if (! $ups) {
 	die "could not connect to UPS: $!";
 }
 
-# unless(fork()) {
+unless(fork()) {
 	openlog("nutdown", "pid,perror", "daemon");
 	syslog("notice", "starting up with config $configfile, polling every ". $conf->{poll_interval}. "s");
 
 	my $last_state = '';
+	my $last_charge = 100;
 
-	print Dumper($ups);
-
-	while (1) {
-		if (! defined($ups)) {
+	while (1 == 1) {
+		if (! $ups->{srvsock}) {
 			$ups = maybe_connect_to_ups();
 		}
 
-		if ((! defined($ups)) or (! $ups->{srvsock}->connected())) {
-			sleep($conf->{poll_interval});
-			next;
-		}
-
-		# UPS::Nut->{srvsock} isa IO::Socket::INET
-		if (! $ups->{srvsock}->connected()) {
-			sleep($conf->{poll_interval});
-			next;
-		}
-
-		my $status = $ups->Status();
-
-		print Dumper($status);
+		my $status;
+		$status = $ups->Status();
 
 		if (not defined($status)) {
 			syslog "notice", "no status";
@@ -68,27 +55,31 @@ if (! $ups) {
 		if ($status =~ m/^OB/) {
 			# on battery
 
+			if ($last_state ne 'OB') {
+				execute_action($conf->{event}->{power_fail});
+			}
+
 			my $battery = $ups->BattPercent();
 			if (defined($battery)) {
-				if ($battery != $last_state) {
+				if ($battery != $last_charge) {
 					my $i;
-					for ($i = $last_state; $i > $battery; $i--) {
+					for ($i = $last_charge; $i > $battery; $i--) {
 						# execute all actions between the last known battery charge and the current charge
 						if (exists($conf->{event}->{$i})) {
 							execute_action($conf->{event}->{$i});
 						}
 					}
 				}
-				$last_state = $battery + 0; # we want a sane number, no leading zeroes or stuff, so force a cast
+				$last_charge = $battery + 0; # we want a sane number, no leading zeroes or stuff, so force a cast
 			} else {
 				if ($last_state eq 'OB') {
 					# we didn't get a percentage twice, do something
 					execute_action($conf->{event}->{unknown_percentage});
 				} else {
 					# we didn't get a percentage once, that may be bad
-					$last_state = 'OB';
 				}
 			}
+			$last_state = 'OB';
 		} elsif ($status =~ m/^OL/) {
 			# on line power
 
@@ -98,6 +89,7 @@ if (! $ups) {
 			}
 
 			$last_state = 'OL';
+			$last_charge = 100; # set to 100 so the next powerfail will always execute all the powerfail and percentage actions from 100 down to the current percentage
 		} else {
 			# some unknown status
 
@@ -105,8 +97,6 @@ if (! $ups) {
 				syslog("warning", "reconnecting because of unparseable status ". $status // "undef");
 				execute_action($conf->{event}->{unknown_status});
 				$last_state = 'unknown_status';
-
-				$ups = maybe_connect_to_ups();
 			}
 		}
 
@@ -123,9 +113,11 @@ sub execute_action {
 			syslog("info", $action->{syslog});
 		}
 
+		$ups->Logout(); # close ups connection before fork()ing, UPS::Nut crashes if we don't
 		if ($action->{exec}) {
 			unless(fork()) {
 				run $action->{exec};
+				exit 0;
 			}
 		}
 	}
@@ -157,16 +149,12 @@ sub create_hostconfig
 	};
 	
 	%conf = ParseConfig(-ConfigFile => $configfile, -DefaultConfig => $defaultconfig, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
-	print Dumper(\%conf);
 	if (exists $conf{$host}) {
 		if (exists $conf{$host}->{group} and exists $conf{group} and exists $conf{group}->{$conf{$host}->{group}}) {
-	print Dumper(\%conf);
 			%conf = ParseConfig(-ConfigHash => $conf{group}->{$conf{$host}->{group}}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 		}
 		%conf = ParseConfig(-ConfigHash => $conf{$host}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
-	print Dumper(\%conf);
 	}
-	print Dumper(\%conf);
 
 	return \%conf;
 }
