@@ -26,7 +26,7 @@ if (! $ups) {
 	die "could not connect to UPS: $!";
 }
 
-#unless(fork()) {
+unless(fork()) {
 	openlog("nutdown", "pid,perror", "daemon");
 	syslog("notice", "starting up with config $configfile");
 
@@ -107,7 +107,7 @@ if (! $ups) {
 
 		sleep($conf->{poll_interval});
 	}
-# }
+}
 
 exit 0;
 
