@@ -26,9 +26,9 @@ if (! $ups) {
 	die "could not connect to UPS: $!";
 }
 
-unless(fork()) {
+# unless(fork()) {
 	openlog("nutdown", "pid,perror", "daemon");
-	syslog("notice", "starting up with config $configfile");
+	syslog("notice", "starting up with config $configfile, polling every ". $conf->{poll_interval}. "s");
 
 	my $last_state = '';
 
@@ -112,7 +112,7 @@ unless(fork()) {
 
 		sleep($conf->{poll_interval});
 	}
-}
+# }
 
 exit 0;
 
@@ -150,32 +150,23 @@ sub maybe_connect_to_ups {
 sub create_hostconfig 
 {	
 	my $configfile = shift;
-	my %fconf = ParseConfig($configfile);
 	my $host = hostname();
-	my $ret;
+	my %conf;
 	my $defaultconfig = {
 		poll_interval => 30,
 	};
-
-	$ret = copy_if_defined($fconf{host}->{$host}, $ret);
-	if (defined($fconf{host}->{$host}->{group})) {
-		$ret = copy_if_defined($fconf{group}->{$fconf{host}->{$host}->{group}}, $ret);
-	}
-	$ret = copy_if_defined($fconf{default}, $ret);
-	$ret = copy_if_defined($defaultconfig, $ret);
-
-	return $ret;
-}
-
-sub copy_if_defined
-{
-	my ($a, $b) = @_;
-
-	for (keys %{$a}) {
-		unless (exists($b->{$_})) {
-			$b->{$_} = $a->{$_};
+	
+	%conf = ParseConfig(-ConfigFile => $configfile, -DefaultConfig => $defaultconfig, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
+	print Dumper(\%conf);
+	if (exists $conf{$host}) {
+		if (exists $conf{$host}->{group} and exists $conf{group} and exists $conf{group}->{$conf{$host}->{group}}) {
+	print Dumper(\%conf);
+			%conf = ParseConfig(-ConfigHash => $conf{group}->{$conf{$host}->{group}}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 		}
+		%conf = ParseConfig(-ConfigHash => $conf{$host}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
+	print Dumper(\%conf);
 	}
+	print Dumper(\%conf);
 
-	return $b;
+	return \%conf;
 }
