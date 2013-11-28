@@ -19,7 +19,7 @@ ok(-x $init, "$init executable exists");
 # 5-6
 ok(run($init), "upsd start");
 ups_state('OL', 100);
-ok(run($nutdown, "$conf/nutdown.conf"), "nutdown starts with test config");
+ok(run($nutdown, "--configfile", "$conf/nutdown.conf"), "nutdown starts with test config");
 sleep 5;
 
 # The test config in nutdown.conf creates files instead of executing the
