@@ -8,11 +8,25 @@ use Config::General qw(ParseConfig);
 use UPS::Nut;
 use IPC::Run qw(run);
 use Data::Dumper qw(Dumper);
+use Getopt::Long;
+use Pod::Usage;
+use utf8;
 
-my $configfile = $ARGV[0] // "/etc/nutdown/nutdown.conf";
+my $configfile = "/etc/nutdown/nutdown.conf";
+my $hostname = hostname();
+my $dump_config = '';
+my $help = '';
+
+GetOptions('dump-config' => \$dump_config, 'hostname=s' => \$hostname, 'configfile=s' => \$configfile, 'help|usage|?' => \$help);
+
+if ($help) {
+	pod2usage(-exitval => 0, -verbose => 2);
+	exit 0;
+}
+
 my $conf = create_hostconfig($configfile);
 
-if (grep {m/^--dump-config$/} @ARGV) {
+if ($dump_config) {
 	use Data::Dumper qw(Dumper);
 	print Dumper($conf);
 	exit;
@@ -142,19 +156,98 @@ sub maybe_connect_to_ups {
 sub create_hostconfig 
 {	
 	my $configfile = shift;
-	my $host = hostname();
 	my %conf;
 	my $defaultconfig = {
 		poll_interval => 30,
 	};
 	
 	%conf = ParseConfig(-ConfigFile => $configfile, -DefaultConfig => $defaultconfig, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
-	if (exists $conf{$host}) {
-		if (exists $conf{$host}->{group} and exists $conf{group} and exists $conf{group}->{$conf{$host}->{group}}) {
-			%conf = ParseConfig(-ConfigHash => $conf{group}->{$conf{$host}->{group}}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
+	if (exists $conf{$hostname}) {
+		if (exists $conf{$hostname}->{group} and exists $conf{group} and exists $conf{group}->{$conf{$hostname}->{group}}) {
+			%conf = ParseConfig(-ConfigHash => $conf{group}->{$conf{$hostname}->{group}}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 		}
-		%conf = ParseConfig(-ConfigHash => $conf{$host}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
+		%conf = ParseConfig(-ConfigHash => $conf{$hostname}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 	}
 
 	return \%conf;
 }
+
+__END__
+
+=encoding UTF-8
+
+=head1 NAME
+
+nutdown - nut UPS client for configurable actions on power failures
+
+=head1 SYNOPSIS
+
+nutdown [--help|--usage] [--configfile I<file>] [--hostname I<hostname>] [--dump-config]
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Print this help message and exit
+
+=item B<--configfile I<file>>
+
+Read the configuration file named I<file> instead of the default F</etc/nutdown/nutdown.conf>.
+
+=item B<--hostname I<hostname>>
+
+Assume, for the purpose of parsing the configuration, that the hostname is I<hostname> instead of looking up the
+hostname via L<Sys::Hostname>. This is intended for cases where L<Sys::Hostname> fails or to test configurations on different
+hosts.
+
+=item B<--dump-config>
+
+Read the configuration, dump it via L<Data::Dumper> and exit. This is intended for testing.
+
+=back
+
+=head1 DESCRIPTION
+
+B<nutdown> will start a daemon that periodically polls the state of an uninteruptible power supply (UPS) via
+nutd. Upon encountering certain events such as power failure, power return or the battery charge falling
+below certain configurable thresholds, configurable events such as the execution of a command are executed.
+
+=head1 EXAMPLES
+
+=over 8
+
+=item C<nutdown>
+
+Start B<nutdown> normally. B<nutdown> will fork into the background and do its work according to its configuration
+in the default location F</etc/nutdown/nutdown.conf>.
+
+=item C<nutdown --hostname examplehost --configfile nutdown.WIP.conf --dump-config>
+
+Assume a hostname of I<examplehost>, parse the configuration file named I<nutdown.WIP.conf> and dump the configuration
+that would be used on that host. This is useful to test the default/host/group configuration mechanism that nutdown
+provides without actually having to be on host I<examplehost>.
+
+=back
+
+=head1 COPYING
+
+Copyright (C) 2013 Alexander Würstlein L<mailto:arw@arw.name>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+
+=head1 AUTHOR
+
+Alexander Würstlein L<mailto:arw@arw.name>
