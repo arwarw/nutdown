@@ -8,6 +8,7 @@ fi
 export NUT_CONFPATH=`pwd`/t/conf
 export NUT_STATEPATH=`pwd`/t/state
 
+touch `pwd`/t/conf/dummy-data
 upsd
 /lib/nut/dummy-ups -a testups -i 1
 sleep 2
