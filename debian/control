@@ -1,0 +1,27 @@
+Source: nutdown
+Section: perl
+Priority: optional
+Maintainer: Alexander Wuerstlein <snalwuer@stud.informatik.uni-erlangen.de>
+Build-Depends: debhelper (>= 8)
+Build-Depends-Indep: libconfig-general-perl,
+ libipc-run-perl,
+ libups-nut-perl,
+ perl,
+ perl-base,
+ perl-modules
+Standards-Version: 3.9.2
+Homepage: http://search.cpan.org/dist/nutdown/
+
+Package: nutdown
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends},
+ libconfig-general-perl,
+ libipc-run-perl,
+ libups-nut-perl,
+ perl,
+ perl-base,
+ perl-modules
+Description: nut UPS client for configurable actions on power failures
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.

@@ -20,4 +20,14 @@ test_requires 'Test::More';
 
 install_script 'script/nutdown';
 
+postamble <<'END_OF_MAKEFILE';
+install:: extra_install
+pure_install:: extra_install
+install_vendor:: extra_install
+
+extra_install:
+	install -d $(DESTDIR)/etc/
+	install -d $(DESTDIR)/etc/nutdown
+END_OF_MAKEFILE
+
 WriteAll;
