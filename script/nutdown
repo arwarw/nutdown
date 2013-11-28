@@ -12,7 +12,7 @@ use Getopt::Long;
 use Pod::Usage;
 use utf8;
 
-$VERSION = '0.1';
+our $VERSION = '0.1';
 
 my $configfile = "/etc/nutdown/nutdown.conf";
 my $hostname = hostname();
