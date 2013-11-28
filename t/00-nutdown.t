@@ -5,7 +5,7 @@ use strict;
 use Test::More tests => 27; 
 use IPC::Run qw(run);
 
-my $nutdown = './nutdown';
+my $nutdown = './script/nutdown';
 my $conf = './t/conf';
 my $state = './t/state';
 my $init = './t/start-nut.sh';

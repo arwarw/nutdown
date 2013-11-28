@@ -5,7 +5,7 @@ use Test::More tests => 18;
 use Data::Dumper qw(Dumper);
 use IPC::Run qw(run);
 
-my $nutdown = './nutdown';
+my $nutdown = './script/nutdown';
 my $config = './t/conf/nutdown.conf';
 
 my $output;
