@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use Sys::Syslog;
 use Sys::Hostname;
-use Config::General qw(ParseConfig);
+use Config::General qw(ParseConfig SaveConfigString);
 use UPS::Nut;
 use IPC::Run qw(run);
 use Data::Dumper qw(Dumper);
@@ -27,6 +27,7 @@ if ($help) {
 my $conf = create_hostconfig($configfile);
 
 if ($dump_config) {
+	print "# dumping config for: host $hostname in $configfile\n";
 	use Data::Dumper qw(Dumper);
 	print Dumper($conf);
 	exit;
@@ -157,16 +158,19 @@ sub create_hostconfig
 {	
 	my $configfile = shift;
 	my %conf;
+	my %prevconf;
 	my $defaultconfig = {
 		poll_interval => 30,
 	};
 	
 	%conf = ParseConfig(-ConfigFile => $configfile, -DefaultConfig => $defaultconfig, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
-	if (exists $conf{$hostname}) {
-		if (exists $conf{$hostname}->{group} and exists $conf{group} and exists $conf{group}->{$conf{$hostname}->{group}}) {
-			%conf = ParseConfig(-ConfigHash => $conf{group}->{$conf{$hostname}->{group}}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
+	if (exists $conf{host} and exists $conf{host}->{$hostname}) {
+		if (exists $conf{host}->{$hostname}->{group} and exists $conf{group} and exists $conf{group}->{$conf{host}->{$hostname}->{group}}) {
+			%prevconf = %conf;
+			%conf = ParseConfig(-String => SaveConfigString($prevconf{group}->{$prevconf{host}->{$hostname}->{group}}), -DefaultConfig => \%prevconf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 		}
-		%conf = ParseConfig(-ConfigHash => $conf{$hostname}, -DefaultConfig => \%conf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
+		%prevconf = %conf;
+		%conf = ParseConfig(-String => SaveConfigString($prevconf{host}->{$hostname}), -DefaultConfig => \%prevconf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 	}
 
 	return \%conf;
