@@ -12,6 +12,8 @@ use Getopt::Long;
 use Pod::Usage;
 use utf8;
 
+$VERSION = '0.1';
+
 my $configfile = "/etc/nutdown/nutdown.conf";
 my $hostname = hostname();
 my $dump_config = '';
@@ -245,7 +247,7 @@ provides without actually having to be on host I<examplehost>.
 
 =back
 
-=head1 COPYING
+=head1 LICENSE AND COPYRIGHT
 
 Copyright (C) 2013 Alexander Würstlein L<mailto:arw@arw.name>
 
@@ -268,4 +270,4 @@ Version 0.1
 
 =head1 AUTHOR
 
-Alexander Würstlein C<< <arw@arw.name> >>
+Alexander Würstlein, C<< <arw@arw.name> >>
