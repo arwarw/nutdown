@@ -53,6 +53,11 @@ poll_interval = 30
 	exec sync
 </event>
 
+<event offline>
+	syslog no UPS connection for 1 minute!
+	exec echo "hey, I lost the UPS connection!" | mail -s "UPS problem" root
+</event>
+
 # end of default section, below are specifics for certain groups or hosts which override
 # the defaults above
 
