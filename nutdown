@@ -16,8 +16,9 @@ my $configfile = "/etc/nutdown/nutdown.conf";
 my $hostname = hostname();
 my $dump_config = '';
 my $help = '';
+my $no_syslog = ''; # intentionally undocumented, just for the testsuite
 
-GetOptions('dump-config' => \$dump_config, 'hostname=s' => \$hostname, 'configfile=s' => \$configfile, 'help|usage|?' => \$help);
+GetOptions('dump-config' => \$dump_config, 'hostname=s' => \$hostname, 'configfile=s' => \$configfile, 'help|usage|?' => \$help, 'no-syslog' => \$no_syslog);
 
 if ($help) {
 	pod2usage(-exitval => 0, -verbose => 2);
@@ -42,8 +43,8 @@ if (! $ups) {
 }
 
 unless(fork()) {
-	openlog("nutdown", "pid,perror", "daemon");
-	syslog("notice", "starting up with config $configfile, polling every ". $conf->{poll_interval}. "s");
+	openlog("nutdown", "pid", "daemon") unless $no_syslog;
+	syslog("notice", "starting up with config $configfile, polling every ". $conf->{poll_interval}. "s") unless $no_syslog;
 
 	my $last_state = '';
 	my $last_charge = 100;
@@ -57,7 +58,7 @@ unless(fork()) {
 		$status = $ups->Status();
 
 		if (not defined($status)) {
-			syslog "notice", "no status";
+			syslog "notice", "no status" unless $no_syslog;
 			sleep($conf->{poll_interval});
 			next;
 		}
@@ -109,7 +110,7 @@ unless(fork()) {
 			# some unknown status
 
 			if ($last_state ne 'unknown_status') {
-				syslog("warning", "reconnecting because of unparseable status ". $status // "undef");
+				syslog("warning", "reconnecting because of unparseable status ". $status // "undef") unless $no_syslog;
 				execute_action($conf->{event}->{unknown_status});
 				$last_state = 'unknown_status';
 			}
@@ -125,7 +126,7 @@ sub execute_action {
 	my $action = shift;
 	if (defined $action) {
 		if ($action->{syslog}) {
-			syslog("info", $action->{syslog});
+			syslog("info", $action->{syslog}) unless $no_syslog;
 		}
 
 		$ups->Logout(); # close ups connection before fork()ing, UPS::Nut crashes if we don't
@@ -147,7 +148,7 @@ sub maybe_connect_to_ups {
 				TIMEOUT => $conf->{ups}->{timeout});
 
 	unless (defined($ret)) {
-		syslog("err", "could not connect to ups ". $conf->{ups}->{name} // "undef");
+		syslog("err", "could not connect to ups ". $conf->{ups}->{name} // "undef") unless $no_syslog;
 		return undef;
 	}
 

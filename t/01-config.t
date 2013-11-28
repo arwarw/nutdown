@@ -11,7 +11,7 @@ my $config = './t/conf/nutdown.conf';
 my $output;
 my $VAR1;
 # 1-2
-ok(run([$nutdown, '--configfile', $config, '--hostname', 'testhost1', '--dump-config'], '>', \$output), "dump-config does something");
+ok(run([$nutdown, '--no-syslog', '--configfile', $config, '--hostname', 'testhost1', '--dump-config'], '>', \$output), "dump-config does something");
 like($output, qr/ups/, "output contains something about an ups");
 
 eval $output; # sets $var1
@@ -23,7 +23,7 @@ is_deeply($VAR1->{event}->{10}, {'syslog' => 'at 10 percent', 'exec' => 'touch t
 
 # host examplehost1 overrides those things
 # 7 - 10
-ok(run([$nutdown, '--configfile', $config, '--hostname', 'examplehost1', '--dump-config'], '>', \$output), "dump-config does something");
+ok(run([$nutdown, '--no-syslog', '--configfile', $config, '--hostname', 'examplehost1', '--dump-config'], '>', \$output), "dump-config does something");
 eval $output;
 is_deeply($VAR1->{ups}, { 'password' => 'testpassword', 'timeout' => '30', 'name' => 'testups', 'port' => '63493', 'host' => 'localhost', 'username' => 'exampleuser1' }, "ups section contains what we expect for examplehost1");
 is($VAR1->{poll_interval}, 23, "poll_interval default of 30 has been overridden to 23 for examplehost1");
@@ -32,7 +32,7 @@ is_deeply($VAR1->{event}->{10}, {'syslog' => 'hello from examplehost1', 'exec' =
 
 # host examplehost2 sets a group which overrides things
 # 11 - 14
-ok(run([$nutdown, '--configfile', $config, '--hostname', 'examplehost2', '--dump-config'], '>', \$output), "dump-config does something");
+ok(run([$nutdown, '--no-syslog', '--configfile', $config, '--hostname', 'examplehost2', '--dump-config'], '>', \$output), "dump-config does something");
 eval $output;
 is_deeply($VAR1->{ups}, { 'password' => 'grouppassword', 'timeout' => '30', 'name' => 'testups', 'port' => '63493', 'host' => 'localhost', 'username' => 'examplegroup' }, "ups section contains what we expect for examplehost2");
 is($VAR1->{poll_interval}, 42, "poll_interval default of 30 has been overridden to 42 for examplehost2");
@@ -40,7 +40,7 @@ is_deeply($VAR1->{event}->{10}, {'syslog' => 'hello from examplegroup', 'exec' =
 
 # host examplehost3 sets a group and overrides more things in its host config
 # 15 - 18
-ok(run([$nutdown, '--configfile', $config, '--hostname', 'examplehost3', '--dump-config'], '>', \$output), "dump-config does something");
+ok(run([$nutdown, '--no-syslog', '--configfile', $config, '--hostname', 'examplehost3', '--dump-config'], '>', \$output), "dump-config does something");
 eval $output;
 is_deeply($VAR1->{ups}, { 'password' => 'grouppassword', 'timeout' => '30', 'name' => 'testups', 'port' => '63493', 'host' => 'localhost', 'username' => 'exampleuser3' }, "ups section contains what we expect for examplehost3");
 is($VAR1->{poll_interval}, 42, "poll_interval default of 30 has been overridden to 42 for examplehost3");
