@@ -38,19 +38,22 @@ if ($dump_config) {
 
 $SIG{CHLD} = "IGNORE";
 my $ups;
-$ups = maybe_connect_to_ups();
-
-if (! $ups) {
-	die "could not connect to UPS: $!";
-}
 
 unless(fork()) {
 	openlog("nutdown", "pid", "daemon") unless $no_syslog;
 	syslog("notice", "starting up with config $configfile, polling every ". $conf->{poll_interval}. "s") unless $no_syslog;
 
-	my $last_state = '';
+	my $last_state = 'OL'; # assume everything is fine at startup for a sensible initial event sequence
 	my $last_charge = 100;
+	my $offline = 0;
 
+	do {
+		$ups = maybe_connect_to_ups();
+		syslog "err", "could not connect to UPS: $!" unless $ups;
+		sleep $conf->{poll_interval};
+	} while(! $ups);
+
+	syslog "info", "upsd connection established, commencing main loop";
 	while (1 == 1) {
 		if (! $ups->{srvsock}) {
 			$ups = maybe_connect_to_ups();
@@ -58,14 +61,13 @@ unless(fork()) {
 
 		my $status;
 		$status = $ups->Status();
-		my $offline = 0;
 
 		if (not defined($status)) {
 			sleep($conf->{poll_interval});
-			if ($offline > 60) {
+			if (defined($offline) and $offline > 60 and $offline <= 60 + $conf->{poll_interval}) {
 				execute_action($conf->{event}->{offline});
 			}
-			if ($offline > 3600) {
+			if (defined($offline) and $offline > 3600 and $offline <= 3600 + $conf->{poll_interval}) {
 				execute_action($conf->{event}->{offline_long});
 			}
 			$offline += $conf->{poll_interval};
@@ -166,15 +168,15 @@ sub maybe_connect_to_ups {
 	return $ret;
 }
 
-sub create_hostconfig 
-{	
+sub create_hostconfig
+{
 	my $configfile = shift;
 	my %conf;
 	my %prevconf;
 	my $defaultconfig = {
 		poll_interval => 30,
 	};
-	
+
 	%conf = ParseConfig(-ConfigFile => $configfile, -DefaultConfig => $defaultconfig, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 	if (exists $conf{host} and exists $conf{host}->{$hostname}) {
 		if (exists $conf{host}->{$hostname}->{group} and exists $conf{group} and exists $conf{group}->{$conf{host}->{$hostname}->{group}}) {
