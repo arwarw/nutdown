@@ -17,6 +17,7 @@ requires 'Getopt::Long';
 requires 'Pod::Usage';
 
 test_requires 'Test::More';
+test_requires 'Test::Perl::Critic';
 
 install_script 'script/nutdown';
 

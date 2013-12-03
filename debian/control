@@ -7,6 +7,7 @@ Build-Depends: debhelper (>= 8),
  nut-server
 Build-Depends-Indep: libconfig-general-perl,
  libipc-run-perl,
+ libtest-perl-critic-perl,
  libups-nut-perl,
  perl,
  perl-base,

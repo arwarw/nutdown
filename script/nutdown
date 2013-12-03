@@ -162,7 +162,7 @@ sub maybe_connect_to_ups {
 
 	unless (defined($ret)) {
 		syslog("err", "could not connect to ups ". $conf->{ups}->{name} // "undef") unless $no_syslog;
-		return undef;
+		return $ret;
 	}
 
 	return $ret;
