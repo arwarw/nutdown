@@ -80,16 +80,20 @@ ok(not (-f "$state/below_10" or -f "$state/below_90"), "below x% indicator files
 # 28 - 31
 # test power_stable
 ups_state('OB', 70);
-sleep(3);
-ok(not (-f "$state/power_stable"), "power_stable does not exist if on battery");
+sleep(4);
+system("ls -la $state");
+ok(not (-f "$state/power_stable"), "power_stable should not exist if on battery");
 ups_state('OL', 79);
-sleep(6);
-ok(not (-f "$state/power_stable"), "power_stable does not exist if on line but below power_stable_time");
+sleep(5);
+system("ls -la $state");
+ok(not (-f "$state/power_stable"), "power_stable should not exist if on line but below power_stable_time");
 ups_state('OL', '80');
-sleep(2);
-ok(not (-f "$state/power_stable"), "power_stable does not exist if on line but still (2s) below power_stable_time");
-sleep(2);
-ok(-f "$state/power_stable", "power_stable does exist if power is stable");
+sleep(1); # timing sometimes breaks this test, but I don't want to make it longer
+system("ls -la $state");
+ok(not (-f "$state/power_stable"), "power_stable should not exist if on line but still (2s) below power_stable_time");
+sleep(5);
+system("ls -la $state");
+ok(-f "$state/power_stable", "power_stable should exist if power is stable");
 
 # TODO: test FSD, unknown_percentage, unknown_status?
 
