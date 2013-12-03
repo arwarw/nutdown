@@ -138,6 +138,32 @@ exit 0;
 sub execute_action {
 	my $action = shift;
 	if (defined $action) {
+		# the order is significant: do sysrq before syslog because syslog could hang
+		# and sysrq is intended as a last fallback that should always work
+
+		# sysrq-action for fork- and disk-IO-less shutdown on linux
+		# all letters are written separately into /proc/sysrq-trigger
+		# commata (',') indicate a sleep(1).
+		if ($action->{sysrq}) {
+			# temporarily ignoring SIGTERM allows nutdown to safely use the
+			# 'e' (send SIGTERM to all processes) sysrq action
+			my $termhandler = $SIG{"TERM"};
+			$SIG{"TERM"} = "IGNORE";
+
+			my @letters = split //, $action->{sysrq};
+			for (@letters) {
+				if ($_ eq ',') {
+					sleep(1);
+				} else {
+					my $sysrq;
+					open $sysrq, ">", "/proc/sysrq-trigger" || next; # don't know what to do here if it fails
+					print $sysrq "$_";
+					close $sysrq;
+				}
+			}
+
+			$SIG{"TERM"} = $termhandler;
+		}
 		if ($action->{syslog}) {
 			syslog("info", $action->{syslog}) unless $no_syslog;
 		}

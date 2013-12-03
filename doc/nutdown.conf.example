@@ -37,6 +37,15 @@ poll_interval = 30
 	exec shutdown -h now "USV battery low"
 </event>
 
+# battery is empty, panic now, shutdown by any means necessary
+# only works on linux systems with /proc/sysrq-trigger configured
+#
+# sending SIGTERM is safe here because nutdown ignores it during
+# sysrq actions, SIGKILL would also kill nutdown.
+<event 5>
+	sysrq se,u,s,,o,oooo
+</event>
+
 # when the USV is in forced_shutdown mode
 <event forced_shutdown>
 	syslog emergency sync for forced shutdown
