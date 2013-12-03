@@ -62,6 +62,20 @@ poll_interval = 30
 	exec sync
 </event>
 
+<event power_fail>
+	syslog "any transition to OB (on battery)"
+</event>
+
+<event power_return>
+	syslog "any transition to OL (on line)"
+</event>
+
+power_stable_time 300
+power_stable_charge 80
+<event power_stable>
+	syslog "power was OL for power_stable_time and battery was above power_stable_charge"
+</event>
+
 <event offline>
 	syslog no UPS connection for 1 minute!
 	exec echo "hey, I lost the UPS connection!" | mail -s "UPS problem" root

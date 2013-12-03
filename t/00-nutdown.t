@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 27; 
+use Test::More tests => 31;
 use IPC::Run qw(run);
 
 my $nutdown = './script/nutdown';
@@ -71,11 +71,26 @@ ok(-f "$state/below_50", "below 50% battery indicator file exists");
 ok(not (-f "$state/below_10"), "below 10% battery indicator does not exist");
 
 # 25 - 27
-ups_state('OL', 100);
+ups_state('OL', 79);
 ok(-f "$state/power_return", "power_return indicator present");
 ok(not (-f "$state/on_battery"), "on battery no longer indicated on power return");
 ok(not (-f "$state/below_10" or -f "$state/below_90"), "below x% indicator files no longer exist");
 # everything should be alright again, state should be cleaned up.
+
+# 28 - 31
+# test power_stable
+ups_state('OB', 70);
+sleep(3);
+ok(not (-f "$state/power_stable"), "power_stable does not exist if on battery");
+ups_state('OL', 79);
+sleep(6);
+ok(not (-f "$state/power_stable"), "power_stable does not exist if on line but below power_stable_time");
+ups_state('OL', '80');
+sleep(2);
+ok(not (-f "$state/power_stable"), "power_stable does not exist if on line but still (2s) below power_stable_time");
+sleep(2);
+ok(-f "$state/power_stable", "power_stable does exist if power is stable");
+
 # TODO: test FSD, unknown_percentage, unknown_status?
 
 done_testing();

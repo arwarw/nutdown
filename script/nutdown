@@ -46,6 +46,7 @@ unless(fork()) {
 	my $last_state = 'OL'; # assume everything is fine at startup for a sensible initial event sequence
 	my $last_charge = 100;
 	my $offline = 0;
+	my $power_stable = 0;
 
 	do {
 		$ups = maybe_connect_to_ups();
@@ -59,8 +60,7 @@ unless(fork()) {
 			$ups = maybe_connect_to_ups();
 		}
 
-		my $status;
-		$status = $ups->Status();
+		my $status = $ups->Status();
 
 		if (not defined($status)) {
 			sleep($conf->{poll_interval});
@@ -71,14 +71,18 @@ unless(fork()) {
 				execute_action($conf->{event}->{offline_long});
 			}
 			$offline += $conf->{poll_interval};
+			$power_stable = 0;
 			next;
 		} else {
 			$offline = 0;
 		}
 
+		my $battery = $ups->BattPercent();
+
 		if ($status =~ m/FSD/) {
 			# forced shutdown state, UPS will cut power soon
 			execute_action($conf->{event}->{forced_shutdown});
+			$power_stable = 0;
 		}
 
 		if ($status =~ m/^OB/) {
@@ -88,7 +92,6 @@ unless(fork()) {
 				execute_action($conf->{event}->{power_fail});
 			}
 
-			my $battery = $ups->BattPercent();
 			if (defined($battery)) {
 				if ($battery != $last_charge) {
 					my $i;
@@ -109,12 +112,30 @@ unless(fork()) {
 				}
 			}
 			$last_state = 'OB';
+			$power_stable = 0;
 		} elsif ($status =~ m/^OL/) {
 			# on line power
 
 			if ($last_state ne 'OL') {
 				# power has returned recently
 				execute_action($conf->{event}->{power_return});
+			}
+
+			if (defined $conf->{power_stable_time}
+				and defined $battery
+				and $battery => $conf->{power_stable_charge}
+				and $power_stable => $conf->{power_stable_time}
+				and $power_stable < $conf->{power_stable_time} + $conf->{poll_interval}) {
+
+				# power was stable and charge was sufficient for at least $conf->{power_stable_time}
+				execute_action($conf->{event}->{power_stable});
+			}
+
+			if (defined $battery and $battery => $conf->{power_stable_charge}) {
+				# only count power_stable time if we are sure things are stable
+				$power_stable += $conf->{poll_interval};
+			} else {
+				$power_stable = 0;
 			}
 
 			$last_state = 'OL';
@@ -127,6 +148,7 @@ unless(fork()) {
 				execute_action($conf->{event}->{unknown_status});
 				$last_state = 'unknown_status';
 			}
+			$power_stable = 0;
 		}
 
 		sleep($conf->{poll_interval});
