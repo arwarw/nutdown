@@ -10,14 +10,14 @@ my $conf = './t/conf';
 my $state = './t/state';
 my $init = './t/start-nut.sh';
 
-# 1-4
+# 1-3
 ok(-d $conf, "$conf directory exists");
-ok(-d $state, "$state directory exists");
 ok(-x $nutdown, "$nutdown executable exists");
 ok(-x $init, "$init executable exists");
 
-# 5-6
+# 4-6
 ok(run($init), "upsd start");
+ok(-d $state, "$state directory exists");
 ups_state('OL', 100);
 ok(run($nutdown, "--no-syslog", "--configfile", "$conf/nutdown.conf"), "nutdown starts with test config");
 sleep 5;
