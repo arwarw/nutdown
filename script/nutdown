@@ -45,8 +45,8 @@ unless(fork()) {
 
 	my $pidfd;
 	if (open $pidfd, ">", $pidfile) {
-		print $pidfile $$;
-		close $pidfile;
+		print $pidfd $$;
+		close $pidfd;
 	}
 
 	openlog("nutdown", "pid", "daemon") unless $no_syslog;
