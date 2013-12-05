@@ -40,6 +40,7 @@ $SIG{CHLD} = "IGNORE";
 my $ups;
 
 unless(fork()) {
+	$0 = "nutdown";
 	openlog("nutdown", "pid", "daemon") unless $no_syslog;
 	syslog("notice", "starting up with config $configfile, polling every ". $conf->{poll_interval}. "s") unless $no_syslog;
 
