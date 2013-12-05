@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 18;
+use Test::More tests => 19;
 use Data::Dumper qw(Dumper);
 use IPC::Run qw(run);
 
@@ -42,8 +42,9 @@ is_deeply($VAR1->{event}->{10}, {'syslog' => 'hello from examplegroup', 'exec' =
 # 15 - 18
 ok(run([$nutdown, '--no-syslog', '--configfile', $config, '--hostname', 'examplehost3', '--dump-config'], '>', \$output), "dump-config does something");
 eval $output;
-is_deeply($VAR1->{ups}, { 'password' => 'grouppassword', 'timeout' => '30', 'name' => 'testups', 'port' => '63493', 'host' => 'localhost', 'username' => 'exampleuser3' }, "ups section contains what we expect for examplehost3");
+is_deeply($VAR1->{ups}, { 'password' => 'grouppassword', 'timeout' => '30', 'name' => 'stuff', 'port' => '63493', 'host' => 'localhost', 'username' => 'exampleuser3' }, "ups section contains what we expect for examplehost3");
 is($VAR1->{poll_interval}, 42, "poll_interval default of 30 has been overridden to 42 for examplehost3");
 is_deeply($VAR1->{event}->{10}, {'syslog' => 'hello from examplehost3', 'exec' => 'touch t/state/below_10'}, "10 percent event looks like it came from examplehost3");
+is_deeply($VAR1->{event}->{11}, {'syslog' => 'something'}, "11 percent event looks like it came from examplehost3");
 
 done_testing();

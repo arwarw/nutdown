@@ -1,3 +1,13 @@
+nutdown (0.2) unstable; urgency=low
+
+  * more features
+  * multiple groups per host in priority order
+  * power_stable state
+  * init-script now only defines Should-Start: nut-server which fixes
+    configurations with a non-localhost nut-server
+
+ -- Alexander Wuerstlein <snalwuer@stud.informatik.uni-erlangen.de>  Thu, 05 Dec 2013 20:14:33 +0100
+
 nutdown (0.1-1) unstable; urgency=low
 
   * Initial Release.

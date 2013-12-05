@@ -12,7 +12,7 @@ use Getopt::Long;
 use Pod::Usage;
 use utf8;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 my $configfile = "/etc/nutdown/nutdown.conf";
 my $hostname = hostname();
@@ -227,9 +227,15 @@ sub create_hostconfig
 
 	%conf = ParseConfig(-ConfigFile => $configfile, -DefaultConfig => $defaultconfig, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 	if (exists $conf{host} and exists $conf{host}->{$hostname}) {
-		if (exists $conf{host}->{$hostname}->{group} and exists $conf{group} and exists $conf{group}->{$conf{host}->{$hostname}->{group}}) {
-			%prevconf = %conf;
-			%conf = ParseConfig(-String => SaveConfigString($prevconf{group}->{$prevconf{host}->{$hostname}->{group}}), -DefaultConfig => \%prevconf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
+		if (exists $conf{host}->{$hostname}->{group} and exists $conf{group}) {
+			# allow multiple groups to be specified, separated by spaces
+			my @groups = split / /, $conf{host}->{$hostname}->{group};
+
+			for (@groups) {
+				%prevconf = %conf;
+				next unless exists($prevconf{group}->{$_});
+				%conf = ParseConfig(-String => SaveConfigString($prevconf{group}->{$_}), -DefaultConfig => \%prevconf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
+			}
 		}
 		%prevconf = %conf;
 		%conf = ParseConfig(-String => SaveConfigString($prevconf{host}->{$hostname}), -DefaultConfig => \%prevconf, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
@@ -316,7 +322,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 =head1 VERSION
 
-Version 0.1
+Version 0.2
 
 =head1 AUTHOR
 
