@@ -12,7 +12,7 @@ use Getopt::Long;
 use Pod::Usage;
 use utf8;
 
-our $VERSION = '0.2';
+our $VERSION = '0.3';
 
 my $configfile = "/etc/nutdown/nutdown.conf";
 my $hostname = hostname();
@@ -322,7 +322,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 =head1 VERSION
 
-Version 0.2
+Version 0.3
 
 =head1 AUTHOR
 

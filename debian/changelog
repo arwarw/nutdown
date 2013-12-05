@@ -1,3 +1,10 @@
+nutdown (0.3) unstable; urgency=low
+
+  * fix bug in group definitions, config option in <host> is now named
+    'groups'
+
+ -- Alexander Wuerstlein <snalwuer@stud.informatik.uni-erlangen.de>  Thu, 05 Dec 2013 21:08:18 +0100
+
 nutdown (0.2) unstable; urgency=low
 
   * more features
