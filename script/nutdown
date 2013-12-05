@@ -227,9 +227,9 @@ sub create_hostconfig
 
 	%conf = ParseConfig(-ConfigFile => $configfile, -DefaultConfig => $defaultconfig, -MergeDuplicateBlocks => 1, -MergeDuplicateOptions => 1);
 	if (exists $conf{host} and exists $conf{host}->{$hostname}) {
-		if (exists $conf{host}->{$hostname}->{group} and exists $conf{group}) {
+		if (exists $conf{host}->{$hostname}->{groups} and exists $conf{group}) {
 			# allow multiple groups to be specified, separated by spaces
-			my @groups = split / /, $conf{host}->{$hostname}->{group};
+			my @groups = split / /, $conf{host}->{$hostname}->{groups};
 
 			for (@groups) {
 				%prevconf = %conf;
