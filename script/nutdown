@@ -15,6 +15,7 @@ use utf8;
 our $VERSION = '0.3';
 
 my $configfile = "/etc/nutdown/nutdown.conf";
+my $pidfile = "/var/run/nutdown.pid";
 my $hostname = hostname();
 my $dump_config = '';
 my $help = '';
@@ -41,6 +42,13 @@ my $ups;
 
 unless(fork()) {
 	$0 = "nutdown";
+
+	my $pidfd;
+	if (open $pidfd, ">", $pidfile) {
+		print $pidfile $$;
+		close $pidfile;
+	}
+
 	openlog("nutdown", "pid", "daemon") unless $no_syslog;
 	syslog("notice", "starting up with config $configfile, polling every ". $conf->{poll_interval}. "s") unless $no_syslog;
 
