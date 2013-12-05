@@ -1,3 +1,9 @@
+nutdown (0.4) unstable; urgency=low
+
+  * write pidfile to make the init-skript work, set argv[0]
+
+ -- Alexander Wuerstlein <snalwuer@stud.informatik.uni-erlangen.de>  Thu, 05 Dec 2013 21:32:13 +0100
+
 nutdown (0.3) unstable; urgency=low
 
   * fix bug in group definitions, config option in <host> is now named
