@@ -1,3 +1,9 @@
+nutdown (0.4-1) unstable; urgency=low
+
+  * fix typo in pidfile handling
+
+ -- Alexander Wuerstlein <snalwuer@stud.informatik.uni-erlangen.de>  Thu, 05 Dec 2013 21:39:27 +0100
+
 nutdown (0.4) unstable; urgency=low
 
   * write pidfile to make the init-skript work, set argv[0]
