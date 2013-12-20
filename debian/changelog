@@ -1,3 +1,10 @@
+nutdown (0.5) unstable; urgency=low
+
+  * create sendsigs.omit entry and adjust kill order on shutdown
+  * improve UPS status parsing
+
+ -- Alexander Wuerstlein <snalwuer@stud.informatik.uni-erlangen.de>  Fri, 20 Dec 2013 12:22:30 +0100
+
 nutdown (0.4-1) unstable; urgency=low
 
   * fix typo in pidfile handling

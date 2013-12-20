@@ -12,7 +12,7 @@ use Getopt::Long;
 use Pod::Usage;
 use utf8;
 
-our $VERSION = '0.4';
+our $VERSION = '0.5';
 
 my $configfile = "/etc/nutdown/nutdown.conf";
 my $pidfile = "/var/run/nutdown.pid";
@@ -50,7 +50,7 @@ unless(fork()) {
 	}
 
 	openlog("nutdown", "pid", "daemon") unless $no_syslog;
-	syslog("notice", "starting up with config $configfile, polling every ". $conf->{poll_interval}. "s") unless $no_syslog;
+	syslog("notice", "version $VERSION starting up with config $configfile, polling every ". $conf->{poll_interval}. "s") unless $no_syslog;
 
 	my $last_state = 'OL'; # assume everything is fine at startup for a sensible initial event sequence
 	my $last_charge = 100;
@@ -332,7 +332,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 =head1 VERSION
 
-Version 0.4
+Version 0.5
 
 =head1 AUTHOR
 
