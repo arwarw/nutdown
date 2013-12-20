@@ -38,13 +38,13 @@ ups_state('OB', 70);
 ok(-f "$state/below_75", "below 75% battery indicator file exists");
 
 # 10 - 12
-ups_state('OB.LB', 10); # take two steps at once
+ups_state('OB LB', 10); # take two steps at once
 ok(-f "$state/below_60", "below 60% battery indicator file exists");
 ok(-f "$state/below_50", "below 50% battery indicator file exists");
 ok(not (-f "$state/below_10"), "below 10% battery indicator file does not yet exist");
 
 # 13
-ups_state('OB.LB', 0);
+ups_state('OB LB', 0);
 ok(-f "$state/below_10", "below 10% battery indicator file exists");
 
 # 14 - 16

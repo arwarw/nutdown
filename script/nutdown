@@ -86,15 +86,16 @@ unless(fork()) {
 			$offline = 0;
 		}
 
+		my @status = split /\s+/, $status;
 		my $battery = $ups->BattPercent();
 
-		if ($status =~ m/FSD/) {
+		if (grep(m/^FSD$/, @status)) {
 			# forced shutdown state, UPS will cut power soon
 			execute_action($conf->{event}->{forced_shutdown});
 			$power_stable = 0;
 		}
 
-		if ($status =~ m/^OB/) {
+		if (grep(m/^OB$/, @status)) {
 			# on battery
 
 			if ($last_state ne 'OB') {
@@ -122,7 +123,7 @@ unless(fork()) {
 			}
 			$last_state = 'OB';
 			$power_stable = 0;
-		} elsif ($status =~ m/^OL/) {
+		} elsif (grep(m/^OL$/, @status)) {
 			# on line power
 
 			if ($last_state ne 'OL') {
