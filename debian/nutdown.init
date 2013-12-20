@@ -27,7 +27,18 @@ SCRIPTNAME=/etc/init.d/$NAME
 # killing nutdown at some point. This is necessary to give nutdown the chance
 # to do things like SysRq-o if a shutdown is "hanging" for a prolonged period
 # of time.
-SIGOMITFILE=/run/sendsigs.omit.d/$NAME
+if [ -d /run/sendsigs.omit.d ] ; then
+	SIGOMITFILE=/run/sendsigs.omit.d/$NAME
+else
+	# oldstable aka squeeze puts it here
+	if [ -d /lib/init/rw/sendsigs.omit.d/ ] ; then
+		SIGOMITFILE=/lib/init/rw/sendsigs.omit.d/$NAME
+	else
+		# put it somewhere, this might be completely bogus, so beware...
+		SIGOMITFILE=/var/run/sendsigs.omit.d/$NAME
+		echo "WARNING: sendsigs.omit.d mechanism might be broken on this system, please check" >&2
+	fi
+fi
 
 CONFIGURATION_FILE=/etc/nutdown/nutdown.conf
 
