@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>Nutdown by arwarw</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Nutdown</h1>
+        <h2>NUT UPS configurable shutdown daemon</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/arwarw/nutdown/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/arwarw/nutdown/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/arwarw/nutdown" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h3>
+<a id="welcome-to-nutdown-the-nut-ups-configurable-shutdown-daemon" class="anchor" href="#welcome-to-nutdown-the-nut-ups-configurable-shutdown-daemon" aria-hidden="true"><span class="octicon octicon-link"></span></a>Welcome to Nutdown, the NUT UPS configurable shutdown daemon</h3>
+
+<p>Nutdown is a Perl daemon that watches the power status reported by your NUT UPS daemon. On configurable events like "mains power failed", "battery is below 20%" or "power is back" you can shut down your hosts in an ordered fashion, sync your data to disk or launch missiles at the backhoe that cut your power. The possibilities are endless and configurable.</p>
+
+<h2>
+<a id="configurable-and-flexible" class="anchor" href="#configurable-and-flexible" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configurable and Flexible</h2>
+
+<p>Nutdown supports grouping hosts and defining actions for single hosts or groups. You may even assign a host to a group while overriding group defaults for a special host.</p>
+
+<p>Nutdown actions can be shell scripts or binaries to be executed. Nutdown creates log entries or uses the Linux SysRq mechanism to quickly sync, umount or switch off in a pinch. Nutdown also runs continuously while the rest of the system is shutting down around it to be able to fulfil its mission to the last second.</p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
